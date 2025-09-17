@@ -5,10 +5,16 @@ A simple MagicMirror² module that displays the **U.S. OPM Operating Status** (W
 It fetches `https://www.opm.gov/json/operatingstatus.json` via the module's `node_helper` with headers (User-Agent, Accept, Referer) to avoid CDN blocks.
 
 ## Install
+```
+cd /path/to/magicmirror/modules/
+```
+
+```
+git clone https://github.com/Maskedman/MMM-OPMStatus.git
+```
 
 ```bash
-cd ~/MagicMirror/modules
-# copy this folder into modules (or unzip the provided archive)
+npm install
 ```
 
 Files:
