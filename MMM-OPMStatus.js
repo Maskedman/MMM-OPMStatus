@@ -1,5 +1,6 @@
 /* MagicMirror² Module: MMM-OPMStatus
- * Shows OPM Operating Status for the Washington, DC area when status is NOT "Open".
+ * Shows OPM Operating Status for the Washington, DC area. By default, hides when status is "Open".
+ * Adds optional QR code (only when NOT "Open") for quick access to details.
  * License: MIT
  */
 Module.register("MMM-OPMStatus", {
@@ -11,7 +12,11 @@ Module.register("MMM-OPMStatus", {
     fadeOpenAfterMs: 0,  // if >0 and showWhenOpen=true, keep visible for this many ms then hide
     headerText: "Federal Operating Status",
     maxWidth: "420px",
-    retryDelay: 60 * 1000
+    retryDelay: 60 * 1000,
+    showLink: false,          // kiosk-safe: off by default
+    showQR: true,             // show QR only when NOT open
+    qrSize: 140,              // px
+    qrDataUrl: "https://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/"
   },
 
   start: function () {
@@ -95,7 +100,7 @@ Module.register("MMM-OPMStatus", {
 
     const isOpen = (this.status.status || "").toLowerCase() === "open";
     if (isOpen && !this.config.showWhenOpen) {
-      // We keep the module hidden (handled in socketNotificationReceived).
+      // hidden module state (text here is mainly for config debugging)
       const msg = document.createElement("div");
       msg.className = "xsmall dimmed";
       msg.innerText = "Status is Open (hidden).";
@@ -123,10 +128,35 @@ Module.register("MMM-OPMStatus", {
       wrapper.appendChild(meta);
     }
 
-    const link = document.createElement("div");
-    link.className = "opm-link xsmall dimmed";
-    link.innerHTML = "<a href='https://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/' target='_blank' rel='noopener'>Details on OPM</a>";
-    wrapper.appendChild(link);
+    // QR code only when NOT open
+    if (!isOpen && this.config.showQR) {
+      const qrWrap = document.createElement("div");
+      qrWrap.className = "opm-qr-wrap";
+      const img = document.createElement("img");
+      const size = parseInt(this.config.qrSize, 10) || 140;
+      const qrBase = "https://quickchart.io/qr";
+      const data = encodeURIComponent(this.config.qrDataUrl);
+      img.src = `${qrBase}?size=${size}x${size}&margin=2&ecLevel=M&text=${data}`;
+      img.alt = "Scan for OPM details";
+      img.width = size;
+      img.height = size;
+      qrWrap.appendChild(img);
+
+      const qrNote = document.createElement("div");
+      qrNote.className = "xsmall dimmed";
+      qrNote.innerText = "Scan for details";
+      qrWrap.appendChild(qrNote);
+
+      wrapper.appendChild(qrWrap);
+    }
+
+    // Optional link (off by default)
+    if (this.config.showLink) {
+      const link = document.createElement("div");
+      link.className = "opm-link xsmall dimmed";
+      link.innerHTML = "<span>Details on OPM: </span><span>opm.gov/current-status</span>";
+      wrapper.appendChild(link);
+    }
 
     return wrapper;
   }
