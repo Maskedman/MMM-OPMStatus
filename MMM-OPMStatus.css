@@ -18,5 +18,18 @@
 }
 .opm-message { font-size: 14px; }
 .opm-meta, .opm-link { margin-top: 4px; }
+
+/* QR placement helpers */
+.opm-content { display: flex; flex-direction: column; }
 .opm-qr-wrap { margin-top: 6px; display: flex; flex-direction: column; align-items: flex-start; }
-.opm-qr-wrap img { border-radius: 6px; }
+.opm-qr-wrap img { border-radius: 6px; max-width: 45vw; height: auto; }
+
+/* Side-by-side layout when qrPosition is left/right */
+.opm-wrapper.row { display: flex; gap: 10px; align-items: flex-start; }
+.opm-wrapper.row .opm-qr-wrap { margin-top: 0; }
+
+/* Tiny screens: stack automatically */
+@media (max-width: 480px) {
+  .opm-wrapper.row { flex-direction: column; }
+  .opm-qr-wrap { margin-top: 6px; }
+}

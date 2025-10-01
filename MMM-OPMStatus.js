@@ -1,6 +1,6 @@
 /* MagicMirror² Module: MMM-OPMStatus
  * Shows OPM Operating Status for the Washington, DC area. By default, hides when status is "Open".
- * Adds optional QR code (only when NOT "Open") for quick access to details.
+ * Optional QR code can be positioned: "below" (default), "right", or "left".
  * License: MIT
  */
 Module.register("MMM-OPMStatus", {
@@ -16,7 +16,8 @@ Module.register("MMM-OPMStatus", {
     showLink: false,          // kiosk-safe: off by default
     showQR: true,             // show QR only when NOT open
     qrSize: 140,              // px
-    qrDataUrl: "https://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/"
+    qrDataUrl: "https://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/",
+    qrPosition: "below"       // "below" | "right" | "left"
   },
 
   start: function () {
@@ -88,35 +89,40 @@ Module.register("MMM-OPMStatus", {
     wrapper.className = "opm-wrapper";
     wrapper.style.maxWidth = this.config.maxWidth;
 
+    const content = document.createElement("div");
+    content.className = "opm-content";
+
     if (!this.loaded) {
-      wrapper.innerHTML = "<div class='small dimmed'>Loading OPM status…</div>";
+      content.innerHTML = "<div class='small dimmed'>Loading OPM status…</div>";
+      wrapper.appendChild(content);
       return wrapper;
     }
 
     if (!this.status) {
-      wrapper.innerHTML = "<div class='small dimmed'>No status.</div>";
+      content.innerHTML = "<div class='small dimmed'>No status.</div>";
+      wrapper.appendChild(content);
       return wrapper;
     }
 
     const isOpen = (this.status.status || "").toLowerCase() === "open";
     if (isOpen && !this.config.showWhenOpen) {
-      // hidden module state (text here is mainly for config debugging)
       const msg = document.createElement("div");
       msg.className = "xsmall dimmed";
       msg.innerText = "Status is Open (hidden).";
-      wrapper.appendChild(msg);
+      content.appendChild(msg);
+      wrapper.appendChild(content);
       return wrapper;
     }
 
     const badge = document.createElement("div");
     badge.className = "opm-badge " + (isOpen ? "open" : "not-open");
     badge.innerText = this.status.status || "Unknown";
-    wrapper.appendChild(badge);
+    content.appendChild(badge);
 
     const msg = document.createElement("div");
     msg.className = "opm-message";
     msg.innerText = this.status.message || "";
-    wrapper.appendChild(msg);
+    content.appendChild(msg);
 
     if (this.status.appliesTo || this.status.postedAt) {
       const meta = document.createElement("div");
@@ -125,12 +131,13 @@ Module.register("MMM-OPMStatus", {
       if (this.status.appliesTo) parts.push(this.status.appliesTo);
       if (this.status.postedAt) parts.push("posted " + this.status.postedAt);
       meta.innerText = parts.join(" • ");
-      wrapper.appendChild(meta);
+      content.appendChild(meta);
     }
 
-    // QR code only when NOT open
+    // Build QR (if any)
+    let qrWrap = null;
     if (!isOpen && this.config.showQR) {
-      const qrWrap = document.createElement("div");
+      qrWrap = document.createElement("div");
       qrWrap.className = "opm-qr-wrap";
       const img = document.createElement("img");
       const size = parseInt(this.config.qrSize, 10) || 140;
@@ -146,8 +153,6 @@ Module.register("MMM-OPMStatus", {
       qrNote.className = "xsmall dimmed";
       qrNote.innerText = "Scan for details";
       qrWrap.appendChild(qrNote);
-
-      wrapper.appendChild(qrWrap);
     }
 
     // Optional link (off by default)
@@ -155,9 +160,34 @@ Module.register("MMM-OPMStatus", {
       const link = document.createElement("div");
       link.className = "opm-link xsmall dimmed";
       link.innerHTML = "<span>Details on OPM: </span><span>opm.gov/current-status</span>";
-      wrapper.appendChild(link);
+      content.appendChild(link);
     }
 
+    // Decide placement
+    const place = (this.config.qrPosition || "below").toLowerCase();
+    const isSide = qrWrap && (place === "left" || place === "right");
+
+    if (isSide) {
+      wrapper.classList.add("row");
+    }
+
+    if (!qrWrap) {
+      // No QR -> just content
+      wrapper.appendChild(content);
+      return wrapper;
+    }
+
+    if (place === "left") {
+      wrapper.appendChild(qrWrap);
+      wrapper.appendChild(content);
+    } else if (place === "right") {
+      wrapper.appendChild(content);
+      wrapper.appendChild(qrWrap);
+    } else {
+      // below (default)
+      wrapper.appendChild(content);
+      wrapper.appendChild(qrWrap);
+    }
     return wrapper;
   }
 });
